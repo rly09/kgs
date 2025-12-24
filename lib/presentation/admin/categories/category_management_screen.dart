@@ -4,13 +4,12 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../providers.dart';
-import '../../../data/database/app_database.dart';
-import 'package:drift/drift.dart' as drift;
+import '../../../data/models/category_model.dart';
 
-// Provider for categories
-final adminCategoriesProvider = StreamProvider<List<Category>>((ref) {
-  final database = ref.watch(databaseProvider);
-  return database.select(database.categories).watch();
+// Provider for categories with refresh capability
+final adminCategoriesProvider = FutureProvider.autoDispose<List<CategoryModel>>((ref) async {
+  final categoryService = ref.watch(categoryServiceProvider);
+  return await categoryService.getCategories();
 });
 
 class CategoryManagementScreen extends ConsumerWidget {
@@ -113,16 +112,39 @@ class CategoryManagementScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
-          child: Text(
-            'Error loading categories',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 60,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: AppDimensions.space),
+              Text(
+                'Error loading categories',
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+              ),
+              const SizedBox(height: AppDimensions.spaceSmall),
+              Text(
+                error.toString(),
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppDimensions.space),
+              ElevatedButton.icon(
+                onPressed: () => ref.refresh(adminCategoriesProvider),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  void _showCategoryDialog(BuildContext context, WidgetRef ref, {Category? category}) {
+  void _showCategoryDialog(BuildContext context, WidgetRef ref, {CategoryModel? category}) {
     final controller = TextEditingController(text: category?.name ?? '');
     final formKey = GlobalKey<FormState>();
 
@@ -158,33 +180,40 @@ class CategoryManagementScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                final database = ref.read(databaseProvider);
-                
-                if (category == null) {
-                  // Add new category
-                  await database.into(database.categories).insert(
-                    CategoriesCompanion.insert(
-                      name: controller.text.trim(),
-                      createdAt: DateTime.now(),
-                    ),
-                  );
-                } else {
-                  // Update existing category
-                  await database.update(database.categories).replace(
-                    category.copyWith(name: controller.text.trim()),
-                  );
-                }
-                
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(category == null
-                          ? 'Category added successfully'
-                          : 'Category updated successfully'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
+                try {
+                  final categoryService = ref.read(categoryServiceProvider);
+                  
+                  if (category == null) {
+                    // Add new category
+                    await categoryService.createCategory(controller.text.trim());
+                  } else {
+                    // Update existing category
+                    await categoryService.updateCategory(category.id, controller.text.trim());
+                  }
+                  
+                  // Refresh the categories list
+                  ref.refresh(adminCategoriesProvider);
+                  
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(category == null
+                            ? 'Category added successfully'
+                            : 'Category updated successfully'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: ${e.toString()}'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
                 }
               }
             },
@@ -195,7 +224,7 @@ class CategoryManagementScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, WidgetRef ref, Category category) {
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, CategoryModel category) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -211,17 +240,32 @@ class CategoryManagementScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final database = ref.read(databaseProvider);
-              await database.delete(database.categories).delete(category);
-              
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Category deleted successfully'),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
+              try {
+                final categoryService = ref.read(categoryServiceProvider);
+                await categoryService.deleteCategory(category.id);
+                
+                // Refresh the categories list
+                ref.refresh(adminCategoriesProvider);
+                
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Category deleted successfully'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(

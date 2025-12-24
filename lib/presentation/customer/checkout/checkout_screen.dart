@@ -8,8 +8,7 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../providers.dart';
-import '../../../data/database/app_database.dart';
-import 'package:drift/drift.dart' as drift;
+import '../../../data/models/order_model.dart';
 import '../../role_selection/role_selection_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -35,7 +34,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.initState();
     // Pre-fill customer details if logged in
     final customer = ref.read(customerAuthProvider);
-    if (customer != null && !customer.isGuest) {
+    if (customer != null) {
       _nameController.text = customer.name ?? '';
       _phoneController.text = customer.phone ?? '';
     }
@@ -80,7 +79,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       final cart = ref.read(cartProvider);
       final customer = ref.read(customerAuthProvider);
-      final database = ref.read(databaseProvider);
+      final orderService = ref.read(orderServiceProvider);
       
       // Get current discount
       final discountPercentage = await ref.read(discountProvider.future);
@@ -88,35 +87,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final discountAmount = subtotal * (discountPercentage / 100);
       final finalTotal = subtotal - discountAmount;
 
-      // Create order
-      final order = await database.into(database.orders).insertReturning(
-        OrdersCompanion.insert(
-          customerId: customer!.id,
-          customerName: _nameController.text,
-          customerPhone: _phoneController.text,
-          deliveryAddress: _addressController.text,
-          note: drift.Value(_noteController.text.isEmpty ? null : _noteController.text),
-          paymentMode: _paymentMode,
-          paymentProofPath: drift.Value(_paymentProof?.path),
-          status: 'PENDING',
-          totalAmount: finalTotal,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
+      // Create order via API
+      final orderCreate = OrderCreate(
+        customerId: customer!.id,
+        customerName: _nameController.text,
+        customerPhone: _phoneController.text,
+        deliveryAddress: _addressController.text,
+        note: _noteController.text.isEmpty ? null : _noteController.text,
+        paymentMode: _paymentMode,
+        totalAmount: finalTotal,
+        items: cart.items.values.map((item) => OrderItemModel(
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          priceAtOrder: item.price,
+        )).toList(),
       );
 
-      // Create order items
-      for (final item in cart.items.values) {
-        await database.into(database.orderItems).insert(
-          OrderItemsCompanion.insert(
-            orderId: order.id,
-            productId: item.productId,
-            productName: item.productName,
-            quantity: item.quantity,
-            priceAtOrder: item.price,
-          ),
-        );
-      }
+      final order = await orderService.createOrder(orderCreate);
 
       // Clear cart
       cart.clear();

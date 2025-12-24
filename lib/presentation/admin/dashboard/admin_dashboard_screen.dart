@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' hide Column, Value;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../providers.dart';
-import '../../../data/database/app_database.dart';
 import '../../role_selection/role_selection_screen.dart';
 import '../orders/order_management_screen.dart';
 import '../analytics/analytics_dashboard_screen.dart';
 
-// Provider for total revenue
+// Provider for total revenue from API
 final totalRevenueProvider = FutureProvider.autoDispose<double>((ref) async {
-  final database = ref.watch(databaseProvider);
-  final orders = await database.select(database.orders).get();
+  final orderService = ref.watch(orderServiceProvider);
+  final orders = await orderService.getOrders();
   
   return orders
       .where((o) => o.status == 'DELIVERED')
@@ -158,13 +156,13 @@ class AdminDashboardScreen extends ConsumerWidget {
   }
 }
 
-// Provider for recent orders
-final recentOrdersProvider = StreamProvider<List<Order>>((ref) {
-  final database = ref.watch(databaseProvider);
-  return (database.select(database.orders)
-        ..orderBy([(t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)])
-        ..limit(5))
-      .watch();
+// Provider for recent orders from API
+final recentOrdersProvider = FutureProvider.autoDispose((ref) async {
+  final orderService = ref.watch(orderServiceProvider);
+  final orders = await orderService.getOrders();
+  // Return only the 5 most recent orders
+  orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return orders.take(5).toList();
 });
 
 class _OrdersList extends ConsumerWidget {

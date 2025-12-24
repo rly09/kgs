@@ -4,23 +4,12 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../data/database/app_database.dart';
+import '../../../data/models/product_model.dart';
+import '../../../data/models/category_model.dart';
 import '../../../providers.dart';
 import '../../role_selection/role_selection_screen.dart';
 import '../cart/cart_screen.dart';
 import '../orders/customer_orders_screen.dart';
-
-// Provider for products
-final productsProvider = StreamProvider<List<Product>>((ref) {
-  final database = ref.watch(databaseProvider);
-  return database.select(database.products).watch();
-});
-
-// Provider for categories
-final categoriesProvider = StreamProvider<List<Category>>((ref) {
-  final database = ref.watch(databaseProvider);
-  return database.select(database.categories).watch();
-});
 
 class CustomerHomeScreen extends ConsumerStatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -318,7 +307,7 @@ class _CategoryChip extends StatelessWidget {
 }
 
 class _ProductCard extends ConsumerWidget {
-  final Product product;
+  final ProductModel product;
 
   const _ProductCard({required this.product});
 

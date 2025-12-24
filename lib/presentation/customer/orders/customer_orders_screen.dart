@@ -5,17 +5,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../providers.dart';
-import '../../../data/database/app_database.dart';
-import 'package:drift/drift.dart' as drift;
-
-// Provider for customer orders
-final customerOrdersProvider = StreamProvider.family<List<Order>, int>((ref, customerId) {
-  final database = ref.watch(databaseProvider);
-  return (database.select(database.orders)
-        ..where((tbl) => tbl.customerId.equals(customerId))
-        ..orderBy([(t) => drift.OrderingTerm.desc(t.createdAt)]))
-      .watch();
-});
+import '../../../data/models/order_model.dart';
 
 class CustomerOrdersScreen extends ConsumerWidget {
   const CustomerOrdersScreen({super.key});
@@ -23,15 +13,13 @@ class CustomerOrdersScreen extends ConsumerWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'PENDING':
-        return AppColors.statusPending;
-      case 'ACCEPTED':
-        return AppColors.statusConfirmed;
-      case 'OUT_FOR_DELIVERY':
-        return AppColors.statusPreparing;
+        return AppColors.warning;
+      case 'CONFIRMED':
+        return AppColors.info;
       case 'DELIVERED':
-        return AppColors.statusDelivered;
+        return AppColors.success;
       case 'CANCELLED':
-        return AppColors.statusCancelled;
+        return AppColors.error;
       default:
         return AppColors.textSecondary;
     }
@@ -41,27 +29,29 @@ class CustomerOrdersScreen extends ConsumerWidget {
     switch (status) {
       case 'PENDING':
         return Icons.schedule_rounded;
-      case 'ACCEPTED':
+      case 'CONFIRMED':
         return Icons.check_circle_outline_rounded;
-      case 'OUT_FOR_DELIVERY':
-        return Icons.local_shipping_rounded;
       case 'DELIVERED':
         return Icons.done_all_rounded;
       case 'CANCELLED':
-        return Icons.cancel_rounded;
+        return Icons.cancel_outlined;
       default:
-        return Icons.info_rounded;
+        return Icons.info_outline_rounded;
     }
   }
 
   String _getStatusText(String status) {
     switch (status) {
-      case 'OUT_FOR_DELIVERY':
-        return 'Out for Delivery';
+      case 'PENDING':
+        return 'Order Placed';
+      case 'CONFIRMED':
+        return 'Confirmed';
+      case 'DELIVERED':
+        return 'Delivered';
       case 'CANCELLED':
         return 'Cancelled';
       default:
-        return status.substring(0, 1) + status.substring(1).toLowerCase();
+        return status;
     }
   }
 
@@ -71,8 +61,7 @@ class CustomerOrdersScreen extends ConsumerWidget {
     
     if (customer == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Orders'), backgroundColor: AppColors.background),
+        appBar: AppBar(title: const Text('My Orders')),
         body: const Center(child: Text('Please login to view orders')),
       );
     }
@@ -81,6 +70,9 @@ class CustomerOrdersScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('My Orders'),
+      ),
       body: ordersAsync.when(
         data: (orders) {
           if (orders.isEmpty) {
@@ -89,9 +81,9 @@ class CustomerOrdersScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.history_rounded,
-                    size: 64,
-                    color: AppColors.textTertiary,
+                    Icons.shopping_bag_outlined,
+                    size: 80,
+                    color: AppColors.textSecondary.withOpacity(0.5),
                   ),
                   const SizedBox(height: AppDimensions.space),
                   Text(
@@ -102,9 +94,9 @@ class CustomerOrdersScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppDimensions.spaceSmall),
                   Text(
-                    'Your order history will appear here',
+                    'Start shopping to place your first order',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textTertiary,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -112,26 +104,53 @@ class CustomerOrdersScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(AppDimensions.padding),
-            itemCount: orders.length,
-            separatorBuilder: (context, index) => const SizedBox(height: AppDimensions.space),
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              return _OrderCard(
-                order: order,
-                statusColor: _getStatusColor(order.status),
-                statusIcon: _getStatusIcon(order.status),
-                statusText: _getStatusText(order.status),
-              );
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.refresh(customerOrdersProvider(customer.id));
             },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(AppDimensions.padding),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                return _OrderCard(
+                  order: order,
+                  statusColor: _getStatusColor(order.status),
+                  statusIcon: _getStatusIcon(order.status),
+                  statusText: _getStatusText(order.status),
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
-          child: Text(
-            'Error loading orders',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 60,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: AppDimensions.space),
+              Text(
+                'Error loading orders',
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+              ),
+              const SizedBox(height: AppDimensions.spaceSmall),
+              Text(
+                error.toString(),
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppDimensions.space),
+              ElevatedButton.icon(
+                onPressed: () => ref.refresh(customerOrdersProvider(customer.id)),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),
@@ -140,7 +159,7 @@ class CustomerOrdersScreen extends ConsumerWidget {
 }
 
 class _OrderCard extends ConsumerWidget {
-  final Order order;
+  final OrderModel order;
   final Color statusColor;
   final IconData statusIcon;
   final String statusText;
@@ -154,17 +173,11 @@ class _OrderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        border: Border.all(color: AppColors.border),
-      ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppDimensions.space),
       child: InkWell(
-        onTap: () {
-          _showOrderDetails(context, ref);
-        },
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        onTap: () => _showOrderDetails(context, ref),
+        borderRadius: BorderRadius.circular(AppDimensions.radius),
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.padding),
           child: Column(
@@ -173,25 +186,15 @@ class _OrderCard extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Order #${order.id}',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        Formatters.formatDateTime(order.createdAt),
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textTertiary),
-                      ),
-                    ],
+                  Text(
+                    'Order #${order.id}',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
+                      horizontal: AppDimensions.paddingSmall,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
@@ -203,13 +206,13 @@ class _OrderCard extends ConsumerWidget {
                       children: [
                         Icon(
                           statusIcon,
-                          size: 14,
+                          size: 16,
                           color: statusColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           statusText,
-                          style: AppTextStyles.label.copyWith(
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: statusColor,
                             fontWeight: FontWeight.w600,
                           ),
@@ -219,18 +222,25 @@ class _OrderCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              const Divider(height: 24),
+              const SizedBox(height: AppDimensions.spaceSmall),
+              Text(
+                '${order.items.length} item${order.items.length > 1 ? 's' : ''}',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.spaceSmall),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Total Amount',
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    Formatters.formatCurrency(order.totalAmount),
+                    style: AppTextStyles.price,
                   ),
                   Text(
-                    Formatters.formatCurrency(order.totalAmount),
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w600,
+                    Formatters.formatDateTime(order.createdAt),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -242,125 +252,174 @@ class _OrderCard extends ConsumerWidget {
     );
   }
 
-  void _showOrderDetails(BuildContext context, WidgetRef ref) async {
-    final database = ref.read(databaseProvider);
-    final orderItems = await (database.select(database.orderItems)
-          ..where((tbl) => tbl.orderId.equals(order.id)))
-        .get();
-
-    if (!context.mounted) return;
-
+  void _showOrderDetails(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Column(
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusLarge),
+          ),
+        ),
+        child: Column(
           children: [
+            // Handle
             Container(
-              padding: const EdgeInsets.all(AppDimensions.padding),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: AppColors.divider),
-                ),
+              margin: const EdgeInsets.symmetric(vertical: AppDimensions.paddingSmall),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
               ),
+            ),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(AppDimensions.padding),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Order Details',
+                    'Order #${order.id}',
                     style: AppTextStyles.heading3,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
                   ),
                 ],
               ),
             ),
+
+            const Divider(height: 1),
+
+            // Content
             Expanded(
               child: SingleChildScrollView(
-                controller: scrollController,
                 padding: const EdgeInsets.all(AppDimensions.padding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Status Timeline
-                    _OrderTimeline(status: order.status),
-
-                    const SizedBox(height: AppDimensions.spaceLarge),
-
-                    // Order Items
-                    Text('Items', style: AppTextStyles.heading3), // Mapped heading4->heading3 usage check? heading4 is alias now so OK.
-                    const SizedBox(height: AppDimensions.space),
-                    ...orderItems.map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(Icons.shopping_bag_outlined, size: 20, color: AppColors.textTertiary),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.productName,
-                                    style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                    // Status
+                    Container(
+                      padding: const EdgeInsets.all(AppDimensions.padding),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppDimensions.radius),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(statusIcon, color: statusColor, size: 32),
+                          const SizedBox(width: AppDimensions.space),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  statusText,
+                                  style: AppTextStyles.heading4.copyWith(
+                                    color: statusColor,
                                   ),
-                                  Text(
-                                    'Qty: ${item.quantity}',
-                                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                                ),
+                                Text(
+                                  Formatters.formatDateTime(order.updatedAt),
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              Formatters.formatCurrency(item.priceAtOrder * item.quantity),
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const Divider(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Total', style: AppTextStyles.heading3),
-                        Text(
-                          Formatters.formatCurrency(order.totalAmount),
-                          style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
 
-                    const SizedBox(height: AppDimensions.spaceLarge),
-
-                    // Delivery & Payment
-                    Text('Information', style: AppTextStyles.heading3),
                     const SizedBox(height: AppDimensions.space),
-                    _DetailRow('Address', order.deliveryAddress),
-                    _DetailRow('Phone', Formatters.formatPhone(order.customerPhone)),
-                    _DetailRow('Payment', order.paymentMode == 'COD' ? 'Cash by Hand' : 'Online'),
-                    if (order.note != null) _DetailRow('Note', order.note!),
+
+                    // Delivery Details
+                    Text(
+                      'Delivery Details',
+                      style: AppTextStyles.heading4,
+                    ),
+                    const SizedBox(height: AppDimensions.spaceSmall),
+                    _DetailRow(label: 'Address', value: order.deliveryAddress),
+                    _DetailRow(label: 'Payment', value: order.paymentMode),
+                    if (order.note != null && order.note!.isNotEmpty)
+                      _DetailRow(label: 'Note', value: order.note!),
+
+                    const SizedBox(height: AppDimensions.space),
+
+                    // Order Items
+                    Text(
+                      'Order Items',
+                      style: AppTextStyles.heading4,
+                    ),
+                    const SizedBox(height: AppDimensions.spaceSmall),
+                    ...order.items.map((item) => Card(
+                          margin: const EdgeInsets.only(bottom: AppDimensions.spaceSmall),
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.productName,
+                                        style: AppTextStyles.bodyMedium.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Qty: ${item.quantity} × ${Formatters.formatCurrency(item.priceAtOrder)}',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  Formatters.formatCurrency(item.priceAtOrder * item.quantity),
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+
+                    const SizedBox(height: AppDimensions.space),
+
+                    // Total
+                    Container(
+                      padding: const EdgeInsets.all(AppDimensions.padding),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(AppDimensions.radius),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Amount',
+                            style: AppTextStyles.heading4,
+                          ),
+                          Text(
+                            Formatters.formatCurrency(order.totalAmount),
+                            style: AppTextStyles.price.copyWith(fontSize: 20),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -372,120 +431,26 @@ class _OrderCard extends ConsumerWidget {
   }
 }
 
-class _OrderTimeline extends StatelessWidget {
-  final String status;
-
-  const _OrderTimeline({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final steps = [
-      {'status': 'PENDING', 'label': 'Pending', 'icon': Icons.schedule_rounded},
-      {'status': 'ACCEPTED', 'label': 'Accepted', 'icon': Icons.check_circle_outline_rounded},
-      {'status': 'OUT_FOR_DELIVERY', 'label': 'In Transit', 'icon': Icons.local_shipping_outlined},
-      {'status': 'DELIVERED', 'label': 'Delivered', 'icon': Icons.done_all_rounded},
-    ];
-
-    final currentIndex = status == 'CANCELLED' 
-        ? -1 
-        : steps.indexWhere((s) => s['status'] == status);
-
-    if (status == 'CANCELLED') {
-      return Container(
-        padding: const EdgeInsets.all(AppDimensions.padding),
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(color: AppColors.error.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.cancel_outlined, color: AppColors.error),
-            const SizedBox(width: 12),
-            Text(
-              'This order was cancelled',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Row(
-      children: List.generate(steps.length, (index) {
-        final step = steps[index];
-        final isCompleted = index <= currentIndex;
-        final isLast = index == steps.length - 1;
-
-        return Expanded(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: index == 0 ? Colors.transparent : (isCompleted ? AppColors.primary : AppColors.divider),
-                    ),
-                  ),
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isCompleted ? AppColors.primary : AppColors.surfaceLight,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isCompleted ? AppColors.primary : AppColors.border,
-                        width: 2,
-                      ),
-                    ),
-                    child: isCompleted
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
-                        : null,
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: isLast ? Colors.transparent : (index < currentIndex ? AppColors.primary : AppColors.divider),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                step['label'] as String,
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 10,
-                  color: isCompleted ? AppColors.textPrimary : AppColors.textTertiary,
-                  fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow(this.label, this.value);
+  const _DetailRow({
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(bottom: AppDimensions.spaceSmall),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 80,
             child: Text(
-              label,
+              '$label:',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -494,9 +459,7 @@ class _DetailRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.bodyMedium,
             ),
           ),
         ],

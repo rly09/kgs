@@ -5,17 +5,17 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../providers.dart';
-import '../../../data/database/app_database.dart';
+import '../../../data/models/order_model.dart';
+import '../../../data/models/product_model.dart';
 
-// Analytics data provider
+// Analytics data provider using API
 final analyticsDataProvider = FutureProvider<AnalyticsData>((ref) async {
-  final database = ref.watch(databaseProvider);
+  final orderService = ref.watch(orderServiceProvider);
+  final productService = ref.watch(productServiceProvider);
   
-  // Get all orders
-  final orders = await database.select(database.orders).get();
-  
-  // Get all products
-  final products = await database.select(database.products).get();
+  // Get all orders and products from API
+  final orders = await orderService.getOrders();
+  final products = await productService.getProducts();
   
   // Calculate metrics
   final totalRevenue = orders
@@ -27,13 +27,15 @@ final analyticsDataProvider = FutureProvider<AnalyticsData>((ref) async {
   final deliveredOrders = orders.where((o) => o.status == 'DELIVERED').length;
   final cancelledOrders = orders.where((o) => o.status == 'CANCELLED').length;
   
-  // Get order items for product analysis
-  final orderItems = await database.select(database.orderItems).get();
-  
-  // Calculate top products
+  // Calculate top products from order items
   final productSales = <int, int>{};
-  for (var item in orderItems) {
-    productSales[item.productId] = (productSales[item.productId] ?? 0) + item.quantity;
+  final productRevenue = <int, double>{};
+  
+  for (var order in orders) {
+    for (var item in order.items) {
+      productSales[item.productId] = (productSales[item.productId] ?? 0) + item.quantity;
+      productRevenue[item.productId] = (productRevenue[item.productId] ?? 0) + (item.priceAtOrder * item.quantity);
+    }
   }
   
   final topProductIds = productSales.entries.toList()
@@ -41,17 +43,17 @@ final analyticsDataProvider = FutureProvider<AnalyticsData>((ref) async {
   
   final topProducts = <ProductSales>[];
   for (var entry in topProductIds.take(5)) {
-    final product = products.firstWhere((p) => p.id == entry.key);
-    topProducts.add(ProductSales(
-      productName: product.name,
-      quantitySold: entry.value,
-      revenue: orderItems
-          .where((item) => item.productId == entry.key)
-          .fold(0.0, (sum, item) => sum + (item.priceAtOrder * item.quantity)),
-    ));
+    final product = products.where((p) => p.id == entry.key).firstOrNull;
+    if (product != null) {
+      topProducts.add(ProductSales(
+        productName: product.name,
+        quantitySold: entry.value,
+        revenue: productRevenue[entry.key] ?? 0,
+      ));
+    }
   }
   
-  // Recent orders
+  // Recent orders (already sorted by createdAt desc from API)
   final recentOrders = orders.take(5).toList();
   
   return AnalyticsData(
@@ -76,7 +78,7 @@ class AnalyticsData {
   final int totalProducts;
   final int lowStockProducts;
   final List<ProductSales> topProducts;
-  final List<Order> recentOrders;
+  final List<OrderModel> recentOrders;
 
   AnalyticsData({
     required this.totalRevenue,
