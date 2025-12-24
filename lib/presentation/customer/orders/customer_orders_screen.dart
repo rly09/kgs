@@ -70,9 +70,6 @@ class CustomerOrdersScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('My Orders'),
-      ),
       body: ordersAsync.when(
         data: (orders) {
           if (orders.isEmpty) {
