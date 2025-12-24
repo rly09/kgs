@@ -1,16 +1,19 @@
 class AuthResponse {
   final String accessToken;
   final String tokenType;
+  final Map<String, dynamic>? user; // User data from backend
   
   AuthResponse({
     required this.accessToken,
     required this.tokenType,
+    this.user,
   });
   
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       accessToken: json['access_token'] as String,
       tokenType: json['token_type'] as String,
+      user: json['user'] as Map<String, dynamic>?,
     );
   }
   
@@ -18,6 +21,7 @@ class AuthResponse {
     return {
       'access_token': accessToken,
       'token_type': tokenType,
+      if (user != null) 'user': user,
     };
   }
 }

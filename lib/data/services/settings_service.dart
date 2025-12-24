@@ -15,8 +15,7 @@ class SettingsService {
   
   Future<double> updateDiscount(double percentage) async {
     final response = await _apiClient.put(
-      ApiConstants.discount,
-      data: DiscountUpdate(discountPercentage: percentage).toJson(),
+      '${ApiConstants.discount}?discount=$percentage',
     );
     final discountResponse = DiscountResponse.fromJson(response.data);
     return discountResponse.discountPercentage;

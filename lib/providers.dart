@@ -61,18 +61,24 @@ class AdminAuthNotifier extends StateNotifier<AdminModel?> {
   Future<bool> login(String phone, String password) async {
     try {
       final authResponse = await _authService.adminLogin(phone, password);
-      // Create a temporary admin model (we don't get admin details from the API)
+      
+      // Extract admin data from auth response
+      final userData = authResponse.user;
+      final adminId = userData?['id'] as int? ?? 0;
+      final adminName = userData?['name'] as String? ?? 'Admin';
+      
+      // Create admin model with actual ID from backend
       state = AdminModel(
-        id: 0, // We don't have this from the token
+        id: adminId,
         phone: phone,
-        name: 'Admin',
+        name: adminName,
         createdAt: DateTime.now(),
       );
       
       // Save admin info to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('admin_phone', phone);
-      await prefs.setString('admin_name', 'Admin');
+      await prefs.setString('admin_name', adminName);
       
       return true;
     } catch (e) {
@@ -126,9 +132,13 @@ class CustomerAuthNotifier extends StateNotifier<CustomerModel?> {
     try {
       final authResponse = await _authService.customerLogin(phone, name);
       
-      // Create customer model (we don't get full details from the API)
+      // Extract customer data from auth response
+      final userData = authResponse.user;
+      final customerId = userData?['id'] as int? ?? 0;
+      
+      // Create customer model with actual ID from backend
       final customer = CustomerModel(
-        id: 0, // We'll get this from the backend later
+        id: customerId,
         phone: phone,
         name: name,
         createdAt: DateTime.now(),
