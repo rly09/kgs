@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../../providers.dart';
 import '../checkout/checkout_screen.dart';
 
@@ -45,14 +46,20 @@ class CartScreen extends ConsumerWidget {
         : Column(
             children: [
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.padding, vertical: AppDimensions.paddingSmall),
-                  itemCount: cartItems.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.divider),
-                  itemBuilder: (context, index) {
-                    final item = cartItems[index];
-                    return _CartItemRow(item: item);
-                  },
+                child: ResponsiveHelper.constrainedContent(
+                  context,
+                  child: ListView.separated(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveHelper.getResponsivePadding(context),
+                      vertical: AppDimensions.paddingSmall,
+                    ),
+                    itemCount: cartItems.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.divider),
+                    itemBuilder: (context, index) {
+                      final item = cartItems[index];
+                      return _CartItemRow(item: item);
+                    },
+                  ),
                 ),
               ),
               // Bottom total and checkout - Flat & Minimal with top border

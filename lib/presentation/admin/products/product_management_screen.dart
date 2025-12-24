@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../../providers.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/category_model.dart';
@@ -67,13 +68,15 @@ class ProductManagementScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(AppDimensions.padding),
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: AppDimensions.space),
+          return ResponsiveHelper.constrainedContent(
+            context,
+            child: ListView.builder(
+              padding: EdgeInsets.all(ResponsiveHelper.getResponsivePadding(context)),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: AppDimensions.space),
                 child: ListTile(
                   leading: Container(
                     width: 60,
@@ -139,7 +142,7 @@ class ProductManagementScreen extends ConsumerWidget {
                 ),
               );
             },
-          );
+            ));
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(

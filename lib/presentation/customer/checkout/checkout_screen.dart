@@ -7,6 +7,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../../providers.dart';
 import '../../../data/models/order_model.dart';
 import '../../role_selection/role_selection_screen.dart';
@@ -210,15 +211,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         scrolledUnderElevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.padding),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Delivery Details
-              Text('Delivery Details', style: AppTextStyles.heading3),
-              const SizedBox(height: AppDimensions.space),
+        padding: EdgeInsets.all(ResponsiveHelper.getResponsivePadding(context)),
+        child: ResponsiveHelper.constrainedContent(
+          context,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Delivery Details
+                Text('Delivery Details', style: AppTextStyles.heading3),
+                const SizedBox(height: AppDimensions.space),
 
               _buildTextField(
                 controller: _nameController,
@@ -430,7 +433,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
         ),
       ),
-    );
+      ));
   }
 
   Widget _buildTextField({
@@ -537,3 +540,4 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 }
+

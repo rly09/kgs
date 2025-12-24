@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/responsive_helper.dart';
 import '../../../providers.dart';
 import '../../role_selection/role_selection_screen.dart';
 import '../orders/order_management_screen.dart';
@@ -51,9 +52,11 @@ class AdminDashboardScreen extends ConsumerWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.padding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: EdgeInsets.all(ResponsiveHelper.getResponsivePadding(context)),
+        child: ResponsiveHelper.constrainedContent(
+          context,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Revenue Card - Minimal
             revenueAsync.when(
@@ -126,9 +129,9 @@ class AdminDashboardScreen extends ConsumerWidget {
             // Discount Card - Minimal
             const _DiscountCard(),
 
-            const SizedBox(height: AppDimensions.spaceLarge),
+            SizedBox(height: ResponsiveHelper.getResponsiveSpacing(context) * 2),
 
-            // Recent Orders Header
+            // Quick Actions Griders Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -150,6 +153,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             // Orders List
             const _OrdersList(),
           ],
+        ),
         ),
       ),
     );
