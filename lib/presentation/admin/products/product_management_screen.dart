@@ -352,8 +352,11 @@ class ProductManagementScreen extends ConsumerWidget {
                           
                           // Upload image if selected
                           if (selectedImage != null) {
+                            final bytes = await selectedImage!.readAsBytes();
+                            final filename = selectedImage!.path.split('/').last;
                             uploadedImagePath = await adminService.uploadProductImage(
-                              selectedImage!.path,
+                              bytes: bytes,
+                              filename: filename,
                             );
                           }
                           

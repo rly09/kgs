@@ -31,10 +31,14 @@ class AdminService {
   }
 
   /// Upload product image
-  Future<String> uploadProductImage(String filePath) async {
-    final response = await _apiClient.uploadFile(
+  Future<String> uploadProductImage({
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    final response = await _apiClient.uploadFileBytes(
       '${ApiConstants.products}/upload-image',
-      filePath,
+      bytes: bytes,
+      filename: filename,
     );
     return response.data['image_path'] as String;
   }

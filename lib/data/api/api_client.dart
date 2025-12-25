@@ -161,6 +161,31 @@ class ApiClient {
     }
   }
   
+  Future<Response> uploadFileBytes(
+    String path, {
+    required List<int> bytes,
+    required String filename,
+    String fieldName = 'file',
+    Map<String, dynamic>? additionalData,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        fieldName: MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+        ),
+        ...?additionalData,
+      });
+      
+      return await _dio.post(
+        path,
+        data: formData,
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+  
   // Error handling
   ApiException _handleError(DioException error) {
     switch (error.type) {
