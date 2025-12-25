@@ -169,10 +169,18 @@ class ApiClient {
     Map<String, dynamic>? additionalData,
   }) async {
     try {
+      // Ensure filename has proper extension
+      String finalFilename = filename;
+      if (!filename.contains('.')) {
+        finalFilename = '$filename.jpg'; // Default to jpg if no extension
+      }
+      
+      print('Uploading file: $finalFilename'); // Debug log
+      
       final formData = FormData.fromMap({
         fieldName: MultipartFile.fromBytes(
           bytes,
-          filename: filename,
+          filename: finalFilename,
         ),
         ...?additionalData,
       });
