@@ -6,6 +6,7 @@ import 'data/services/category_service.dart';
 import 'data/services/product_service.dart';
 import 'data/services/order_service.dart';
 import 'data/services/settings_service.dart';
+import 'data/services/admin_service.dart';
 import 'data/models/auth_models.dart';
 import 'data/models/category_model.dart';
 import 'data/models/product_model.dart';
@@ -36,6 +37,10 @@ final orderServiceProvider = Provider<OrderService>((ref) {
 
 final settingsServiceProvider = Provider<SettingsService>((ref) {
   return SettingsService(ref.read(apiClientProvider));
+});
+
+final adminServiceProvider = Provider<AdminService>((ref) {
+  return AdminService(ref.read(apiClientProvider));
 });
 
 // Admin authentication provider

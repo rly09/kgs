@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
@@ -193,6 +195,9 @@ class ProductManagementScreen extends ConsumerWidget {
     );
     int? selectedCategoryId = product?.categoryId ?? categories.firstOrNull?.id;
     final formKey = GlobalKey<FormState>();
+    File? selectedImage;
+    String? uploadedImagePath = product?.imagePath;
+    bool isUploadingImage = false;
 
     showDialog(
       context: context,
@@ -280,6 +285,51 @@ class ProductManagementScreen extends ConsumerWidget {
                       return null;
                     },
                   ),
+                  const SizedBox(height: AppDimensions.space),
+                  // Image preview
+                  if (selectedImage != null || uploadedImagePath != null)
+                    Container(
+                      height: 150,
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: AppDimensions.spaceSmall),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: selectedImage != null
+                          ? Image.file(selectedImage!, fit: BoxFit.cover)
+                          : uploadedImagePath != null
+                              ? Image.network(
+                                  'https://kgs-backend-ej2z.onrender.com$uploadedImagePath',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(Icons.image_not_supported, size: 48),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: isUploadingImage
+                        ? null
+                        : () async {
+                            final picker = ImagePicker();
+                            final pickedFile = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
+                            if (pickedFile != null) {
+                              setState(() {
+                                selectedImage = File(pickedFile.path);
+                              });
+                            }
+                          },
+                    icon: const Icon(Icons.image_outlined),
+                    label: Text(
+                      selectedImage != null || uploadedImagePath != null
+                          ? 'Change Image'
+                          : 'Add Image (Optional)',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -290,61 +340,85 @@ class ProductManagementScreen extends ConsumerWidget {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate() && selectedCategoryId != null) {
-                  try {
-                    final productService = ref.read(productServiceProvider);
-                    
-                    if (product == null) {
-                      // Add new product
-                      await productService.createProduct(
-                        ProductCreate(
-                          categoryId: selectedCategoryId!,
-                          name: nameController.text.trim(),
-                          price: double.parse(priceController.text),
-                          stock: int.parse(stockController.text),
-                          isAvailable: true,
-                        ),
-                      );
-                    } else {
-                      // Update existing product
-                      await productService.updateProduct(
-                        product.id,
-                        ProductUpdate(
-                          name: nameController.text.trim(),
-                          price: double.parse(priceController.text),
-                          stock: int.parse(stockController.text),
-                        ),
-                      );
-                    }
-                    
-                    // Refresh the products list
-                    ref.refresh(adminProductsProvider);
-                    
-                    if (dialogContext.mounted) {
-                      Navigator.of(dialogContext).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(product == null
-                              ? 'Product added successfully'
-                              : 'Product updated successfully'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (dialogContext.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: ${e.toString()}'),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                    }
-                  }
-                }
-              },
-              child: Text(product == null ? 'Add' : 'Update'),
+              onPressed: isUploadingImage
+                  ? null
+                  : () async {
+                      if (formKey.currentState!.validate() && selectedCategoryId != null) {
+                        setState(() => isUploadingImage = true);
+                        
+                        try {
+                          final productService = ref.read(productServiceProvider);
+                          final adminService = ref.read(adminServiceProvider);
+                          
+                          // Upload image if selected
+                          if (selectedImage != null) {
+                            uploadedImagePath = await adminService.uploadProductImage(
+                              selectedImage!.path,
+                            );
+                          }
+                          
+                          if (product == null) {
+                            // Add new product
+                            await productService.createProduct(
+                              ProductCreate(
+                                categoryId: selectedCategoryId!,
+                                name: nameController.text.trim(),
+                                price: double.parse(priceController.text),
+                                stock: int.parse(stockController.text),
+                                isAvailable: true,
+                                imagePath: uploadedImagePath,
+                              ),
+                            );
+                          } else {
+                            // Update existing product
+                            await productService.updateProduct(
+                              product.id,
+                              ProductUpdate(
+                                name: nameController.text.trim(),
+                                price: double.parse(priceController.text),
+                                stock: int.parse(stockController.text),
+                                imagePath: uploadedImagePath,
+                              ),
+                            );
+                          }
+                          
+                          // Refresh the products list
+                          ref.refresh(adminProductsProvider);
+                          
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(product == null
+                                    ? 'Product added successfully'
+                                    : 'Product updated successfully'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (dialogContext.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: ${e.toString()}'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (dialogContext.mounted) {
+                            setState(() => isUploadingImage = false);
+                          }
+                        }
+                      }
+                    },
+              child: isUploadingImage
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(product == null ? 'Add' : 'Update'),
             ),
           ],
         ),

@@ -254,7 +254,7 @@ class _ProductCard extends ConsumerWidget {
             color: AppColors.surfaceLight,
             child: product.imagePath != null
                 ? Image.network(
-                    product.imagePath!,
+                    'https://kgs-backend-ej2z.onrender.com${product.imagePath}',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return const Icon(

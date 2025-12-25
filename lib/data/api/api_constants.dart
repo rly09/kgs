@@ -32,6 +32,7 @@ class ApiConstants {
   static const String discount = '$apiPrefix/settings/discount';
   
   // Admin
+  static const String admin = '$apiPrefix/admin';
   static const String adminDashboard = '$apiPrefix/admin/dashboard';
   static const String adminAnalytics = '$apiPrefix/admin/analytics';
   

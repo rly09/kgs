@@ -9,6 +9,7 @@ import '../../../providers.dart';
 import '../../role_selection/role_selection_screen.dart';
 import '../orders/order_management_screen.dart';
 import '../analytics/analytics_dashboard_screen.dart';
+import '../settings/admin_settings_screen.dart';
 
 // Provider for total revenue from API
 final totalRevenueProvider = FutureProvider.autoDispose<double>((ref) async {
@@ -50,6 +51,62 @@ class AdminDashboardScreen extends ConsumerWidget {
             },
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Icon(Icons.admin_panel_settings, size: 48, color: Colors.white),
+                  const SizedBox(height: 8),
+                  Text(
+                    ref.watch(adminAuthProvider)?.name ?? 'Admin',
+                    style: AppTextStyles.heading3.copyWith(color: Colors.white),
+                  ),
+                  Text(
+                    ref.watch(adminAuthProvider)?.phone ?? '',
+                    style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AdminSettingsScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: AppColors.error),
+              title: const Text('Logout', style: TextStyle(color: AppColors.error)),
+              onTap: () async {
+                await ref.read(adminAuthProvider.notifier).logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const RoleSelectionScreen(),
+                    ),
+                    (route) => false,
+                  );
+                }
+              },
+            ),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(ResponsiveHelper.getResponsivePadding(context)),

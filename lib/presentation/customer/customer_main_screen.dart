@@ -75,16 +75,17 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               duration: const Duration(milliseconds: 400),
               tabBackgroundColor: AppColors.primary.withOpacity(0.1),
               color: AppColors.textSecondary,
-              tabs: const [
-                GButton(
+              tabs: [
+                const GButton(
                   icon: Icons.home_rounded,
                   text: 'Home',
                 ),
                 GButton(
                   icon: Icons.shopping_cart_rounded,
                   text: 'Cart',
+                  leading: _buildCartIconWithBadge(),
                 ),
-                GButton(
+                const GButton(
                   icon: Icons.receipt_long_rounded,
                   text: 'Orders',
                 ),
@@ -98,6 +99,23 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCartIconWithBadge() {
+    final cart = ref.watch(cartProvider);
+    final itemCount = cart.itemCount;
+
+    return Badge(
+      label: Text('$itemCount'),
+      isLabelVisible: itemCount > 0,
+      backgroundColor: AppColors.primary,
+      textColor: Colors.white,
+      child: Icon(
+        Icons.shopping_cart_rounded,
+        color: _currentIndex == 1 ? AppColors.primary : AppColors.textSecondary,
+        size: 24,
       ),
     );
   }
