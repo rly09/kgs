@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:io';
 import 'api_constants.dart';
 
 class ApiClient {
@@ -138,8 +139,16 @@ class ApiClient {
     Map<String, dynamic>? additionalData,
   }) async {
     try {
+      // Read file as bytes for cross-platform compatibility
+      final file = File(filePath);
+      final bytes = await file.readAsBytes();
+      final fileName = filePath.split('/').last;
+      
       final formData = FormData.fromMap({
-        fieldName: await MultipartFile.fromFile(filePath),
+        fieldName: MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+        ),
         ...?additionalData,
       });
       
