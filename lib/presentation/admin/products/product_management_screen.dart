@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_dimensions.dart';
@@ -195,7 +196,7 @@ class ProductManagementScreen extends ConsumerWidget {
     );
     int? selectedCategoryId = product?.categoryId ?? categories.firstOrNull?.id;
     final formKey = GlobalKey<FormState>();
-    File? selectedImage;
+    XFile? selectedImage;
     String? uploadedImagePath = product?.imagePath;
     bool isUploadingImage = false;
 
@@ -298,7 +299,15 @@ class ProductManagementScreen extends ConsumerWidget {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: selectedImage != null
-                          ? Image.file(selectedImage!, fit: BoxFit.cover)
+                          ? FutureBuilder<Uint8List>(
+                              future: selectedImage!.readAsBytes(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return Image.memory(snapshot.data!, fit: BoxFit.cover);
+                                }
+                                return const Center(child: CircularProgressIndicator());
+                              },
+                            )
                           : uploadedImagePath != null
                               ? Image.network(
                                   'https://kgs-backend-ej2z.onrender.com$uploadedImagePath',
@@ -319,7 +328,7 @@ class ProductManagementScreen extends ConsumerWidget {
                             );
                             if (pickedFile != null) {
                               setState(() {
-                                selectedImage = File(pickedFile.path);
+                                selectedImage = pickedFile;
                               });
                             }
                           },
