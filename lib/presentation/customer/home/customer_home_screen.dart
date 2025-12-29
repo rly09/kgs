@@ -276,6 +276,15 @@ class _ProductCardState extends ConsumerState<_ProductCard>
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
     final isInCart = cart.items.containsKey(widget.product.id);
+    final isMobile = ResponsiveHelper.isMobile(context);
+    final isDesktop = ResponsiveHelper.isDesktop(context);
+    
+    // Responsive sizing
+    final iconSize = isDesktop ? 20.0 : (isMobile ? 18.0 : 19.0);
+    final buttonHeight = isDesktop ? 32.0 : (isMobile ? 30.0 : 31.0);
+    final textFontSize = isDesktop ? 12.0 : (isMobile ? 11.0 : 11.5);
+    final nameFontSize = isDesktop ? 14.0 : (isMobile ? 13.0 : 13.5);
+    final priceFontSize = isDesktop ? 15.0 : (isMobile ? 14.0 : 14.5);
 
     return MouseRegion(
       onEnter: (_) {
@@ -389,7 +398,7 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                         widget.product.name,
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize: nameFontSize,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -397,14 +406,14 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                       const SizedBox(height: 2),
                       Text(
                         Formatters.formatCurrency(widget.product.price),
-                        style: AppTextStyles.price.copyWith(fontSize: 14),
+                        style: AppTextStyles.price.copyWith(fontSize: priceFontSize),
                       ),
                       const Spacer(),
                       
                       // Add to Cart Button
                       SizedBox(
                         width: double.infinity,
-                        height: 28,
+                        height: buttonHeight,
                         child: ElevatedButton(
                           onPressed: widget.product.stock > 0
                               ? () {
@@ -423,7 +432,7 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                             backgroundColor: isInCart ? AppColors.error : AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                             elevation: 0,
-                            minimumSize: const Size(0, 28),
+                            minimumSize: Size(0, buttonHeight),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
@@ -435,12 +444,12 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                             children: [
                               Icon(
                                 isInCart ? Icons.remove_shopping_cart : Icons.add_shopping_cart,
-                                size: 14,
+                                size: iconSize,
                               ),
                               const SizedBox(width: 3),
                               Text(
                                 isInCart ? 'Remove' : 'Add',
-                                style: const TextStyle(fontSize: 11),
+                                style: TextStyle(fontSize: textFontSize),
                               ),
                             ],
                           ),
