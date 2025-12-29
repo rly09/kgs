@@ -117,7 +117,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             backgroundColor: AppColors.cardBackground,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -163,10 +163,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog
-                      Navigator.of(context).pop(); // Close checkout
-                      Navigator.of(context).pop(); // Close cart
-                      // Now on customer home screen
+                      // Close the dialog
+                      Navigator.of(dialogContext).pop();
+                      // Navigate back to the main screen (CustomerMainScreen)
+                      // This will pop all routes until we reach the main screen
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                     style: ElevatedButton.styleFrom(
                       elevation: 0,

@@ -395,11 +395,21 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                             if (isInCart) {
                               cart.removeItem(widget.product.id);
                             } else {
-                              cart.addItem(
+                              final success = cart.addItem(
                                 widget.product.id,
                                 widget.product.name,
                                 widget.product.price,
+                                widget.product.stock,
                               );
+                              if (!success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Stock limit reached for ${widget.product.name}'),
+                                    backgroundColor: AppColors.error,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             }
                           },
                           borderRadius: BorderRadius.circular(20),

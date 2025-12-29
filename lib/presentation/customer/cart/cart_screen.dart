@@ -165,6 +165,13 @@ class _CartItemRow extends ConsumerWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  'Stock: ${item.maxStock}',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 
                 // Minimal Quantity Control
@@ -174,10 +181,7 @@ class _CartItemRow extends ConsumerWidget {
                     _QuantityButton(
                       icon: Icons.remove_rounded,
                       onTap: () {
-                        ref.read(cartProvider).updateQuantity(
-                              item.productId,
-                              item.quantity - 1,
-                            );
+                        ref.read(cartProvider).decrementQuantity(item.productId);
                       },
                     ),
                     const SizedBox(width: 12),
@@ -190,11 +194,18 @@ class _CartItemRow extends ConsumerWidget {
                     const SizedBox(width: 12),
                     _QuantityButton(
                       icon: Icons.add_rounded,
+                      isDisabled: !item.canIncrement,
                       onTap: () {
-                        ref.read(cartProvider).updateQuantity(
-                              item.productId,
-                              item.quantity + 1,
-                            );
+                        final success = ref.read(cartProvider).incrementQuantity(item.productId);
+                        if (!success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Maximum stock (${item.maxStock}) reached for ${item.productName}'),
+                              backgroundColor: AppColors.error,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       },
                     ),
                   ],
@@ -221,22 +232,33 @@ class _CartItemRow extends ConsumerWidget {
 class _QuantityButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
+  final bool isDisabled;
 
-  const _QuantityButton({required this.icon, required this.onTap});
+  const _QuantityButton({
+    required this.icon, 
+    required this.onTap,
+    this.isDisabled = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: isDisabled ? null : onTap,
       borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
       child: Container(
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: isDisabled ? AppColors.border.withOpacity(0.3) : AppColors.border,
+          ),
           borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
         ),
-        child: Icon(icon, size: 16, color: AppColors.textPrimary),
+        child: Icon(
+          icon, 
+          size: 16, 
+          color: isDisabled ? AppColors.textTertiary : AppColors.textPrimary,
+        ),
       ),
     );
   }
