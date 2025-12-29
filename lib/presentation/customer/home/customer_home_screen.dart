@@ -306,7 +306,7 @@ class _ProductCardState extends ConsumerState<_ProductCard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image with gradient overlay
+              // Product Image with gradient overlay and floating add button
               Stack(
                 children: [
                   Container(
@@ -364,7 +364,7 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                   if (widget.product.stock <= 0)
                     Positioned(
                       top: 8,
-                      right: 8,
+                      left: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppDimensions.paddingSmall,
@@ -379,6 +379,49 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                           style: AppTextStyles.labelSmall.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Floating Add to Cart Button
+                  if (widget.product.stock > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            if (isInCart) {
+                              cart.removeItem(widget.product.id);
+                            } else {
+                              cart.addItem(
+                                widget.product.id,
+                                widget.product.name,
+                                widget.product.price,
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: isInCart ? AppColors.error : Colors.green,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (isInCart ? AppColors.error : Colors.green).withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              isInCart ? Icons.remove : Icons.add,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -407,53 +450,6 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                       Text(
                         Formatters.formatCurrency(widget.product.price),
                         style: AppTextStyles.price.copyWith(fontSize: priceFontSize),
-                      ),
-                      const Spacer(),
-                      
-                      // Add to Cart Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: buttonHeight,
-                        child: ElevatedButton(
-                          onPressed: widget.product.stock > 0
-                              ? () {
-                                  if (isInCart) {
-                                    cart.removeItem(widget.product.id);
-                                  } else {
-                                    cart.addItem(
-                                      widget.product.id,
-                                      widget.product.name,
-                                      widget.product.price,
-                                    );
-                                  }
-                                }
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isInCart ? AppColors.error : AppColors.primary,
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                            elevation: 0,
-                            minimumSize: Size(0, buttonHeight),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isInCart ? Icons.remove_shopping_cart : Icons.add_shopping_cart,
-                                size: iconSize,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                isInCart ? 'Remove' : 'Add',
-                                style: TextStyle(fontSize: textFontSize),
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
                     ],
                   ),
