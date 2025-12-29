@@ -11,6 +11,21 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
+  // Display Styles - For hero sections and large text
+  static final TextStyle display1 = _baseStyle.copyWith(
+    fontSize: 40,
+    fontWeight: FontWeight.bold,
+    letterSpacing: -1.0,
+    height: 1.2,
+  );
+
+  static final TextStyle display2 = _baseStyle.copyWith(
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    letterSpacing: -0.8,
+    height: 1.2,
+  );
+
   // Headings - Clean & Bold
   static final TextStyle heading1 = _baseStyle.copyWith(
     fontSize: 28,
@@ -26,6 +41,11 @@ class AppTextStyles {
 
   static final TextStyle heading3 = _baseStyle.copyWith(
     fontSize: 20,
+    fontWeight: FontWeight.w600,
+  );
+
+  static final TextStyle heading4 = _baseStyle.copyWith(
+    fontSize: 18,
     fontWeight: FontWeight.w600,
   );
 
@@ -52,12 +72,34 @@ class AppTextStyles {
   static final TextStyle button = _baseStyle.copyWith(
     fontSize: 16,
     fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+    color: Colors.white,
+  );
+
+  static final TextStyle buttonSmall = _baseStyle.copyWith(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
     color: Colors.white,
   );
   
-  // Minimal Label
+  // Labels
   static final TextStyle label = _baseStyle.copyWith(
     fontSize: 12,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.5,
+    color: AppColors.textSecondary,
+  );
+
+  static final TextStyle labelSmall = _baseStyle.copyWith(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.5,
+    color: AppColors.textSecondary,
+  );
+
+  static final TextStyle labelLarge = _baseStyle.copyWith(
+    fontSize: 14,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.5,
     color: AppColors.textSecondary,
@@ -67,25 +109,57 @@ class AppTextStyles {
   static final TextStyle price = _baseStyle.copyWith(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
+    color: AppColors.primary,
   );
 
-  // --- Compatibility Styles (Mapped to minimal styles) ---
-  
-  static final TextStyle heading4 = heading3.copyWith(fontSize: 18);
-  
+  static final TextStyle priceSmall = _baseStyle.copyWith(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.primary,
+  );
+
+  static final TextStyle priceLarge = _baseStyle.copyWith(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: AppColors.primary,
+  );
+
+  // Special Styles
   static final TextStyle caption = bodySmall;
   
-  static final TextStyle buttonSmall = button.copyWith(fontSize: 14);
-  
-  static final TextStyle labelSmall = label.copyWith(fontSize: 11);
-  
-  static final TextStyle priceSmall = price.copyWith(fontSize: 16);
-  
-  static final TextStyle badge = bodySmall.copyWith(
+  static final TextStyle badge = _baseStyle.copyWith(
+    fontSize: 12,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.3,
   );
   
-  static final TextStyle chip = bodyMedium;
+  static final TextStyle chip = bodyMedium.copyWith(
+    fontWeight: FontWeight.w500,
+  );
+
+  static final TextStyle overline = _baseStyle.copyWith(
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 1.0,
+    color: AppColors.textSecondary,
+  );
+
+  // Responsive text scaling helper
+  static TextStyle responsive(TextStyle style, BuildContext context, {
+    double mobileScale = 1.0,
+    double tabletScale = 1.1,
+    double desktopScale = 1.2,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+    double scale = mobileScale;
+    
+    if (width >= 1024) {
+      scale = desktopScale;
+    } else if (width >= 600) {
+      scale = tabletScale;
+    }
+    
+    return style.copyWith(fontSize: (style.fontSize ?? 14) * scale);
+  }
 }
+

@@ -4,6 +4,7 @@ import '../customer/auth/customer_login_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_dimensions.dart';
+import '../../core/utils/responsive_helper.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -22,7 +23,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: AppDimensions.animationVerySlow),
       vsync: this,
     );
 
@@ -30,12 +31,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -48,138 +47,388 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveHelper.isDesktop(context);
+    final isMobile = ResponsiveHelper.isMobile(context);
+    final maxWidth = ResponsiveHelper.getMaxContentWidth(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingXXLarge),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Image.asset("assets/app_icon.jpeg"),
-                  const SizedBox(height: AppDimensions.spaceSmall),
-                  Text(
-                    'at your doorstep',
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: AppColors.textSecondary,
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: AppColors.backgroundGradient,
+            ),
+            child: SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveHelper.getResponsivePadding(
+                            context,
+                          ),
+                          vertical: isMobile
+                              ? AppDimensions.padding
+                              : AppDimensions.paddingLarge,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Logo and Title - More compact
+                            Hero(
+                              tag: 'app_logo',
+                              child: Container(
+                                constraints: BoxConstraints(
+                                  maxWidth: isMobile ? 90 : 120,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusMedium,
+                                  ),
+                                  child: Image.asset("assets/app_icon.png"),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: isMobile
+                                  ? AppDimensions.space
+                                  : AppDimensions.spaceLarge,
+                            ),
+
+                            // Main Title
+                            Text(
+                              'KGS Shop',
+                              style: AppTextStyles.heading2.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: AppDimensions.spaceSmall),
+
+                            Text(
+                              'at your doorstep',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(
+                              height: isMobile
+                                  ? AppDimensions.spaceLarge
+                                  : AppDimensions.spaceXLarge,
+                            ),
+
+                            // Role Cards - Compact layout
+                            if (isDesktop)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _RoleCard(
+                                      icon: Icons.shopping_bag_rounded,
+                                      title: 'Shop',
+                                      subtitle: 'Browse & Purchase',
+                                      color: AppColors.accent,
+                                      gradient: AppColors.accentGradient,
+                                      isCompact: false,
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CustomerLoginScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                children: [
+                                  _RoleCard(
+                                    icon: Icons.shopping_bag_rounded,
+                                    title: 'Customer',
+                                    subtitle: 'Browse & Purchase',
+                                    color: AppColors.accent,
+                                    gradient: AppColors.accentGradient,
+                                    isCompact: isMobile,
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const CustomerLoginScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppDimensions.spaceLarge),
-
-                  // Admin Card
-                  _RoleCard(
-                    icon: Icons.admin_panel_settings_rounded,
-                    title: 'Admin',
-                    subtitle: 'Manage products, orders & analytics',
-                    color: AppColors.primary,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AdminLoginScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppDimensions.spaceSmall),
-
-                  // Customer Card
-                  _RoleCard(
-                    icon: Icons.shopping_bag_rounded,
-                    title: 'Customer',
-                    subtitle: 'Browse products & place orders',
-                    color: AppColors.accent,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const CustomerLoginScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          // Admin Button - Top Right
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: EdgeInsets.all(
+                  isMobile ? AppDimensions.padding : AppDimensions.paddingLarge,
+                ),
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusLarge,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const AdminLoginScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusLarge,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isMobile
+                                  ? AppDimensions.paddingMedium
+                                  : AppDimensions.paddingLarge,
+                              vertical: isMobile
+                                  ? AppDimensions.paddingSmall
+                                  : AppDimensions.padding,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.admin_panel_settings_rounded,
+                                  color: Colors.white,
+                                  size: isMobile ? 20 : 24,
+                                ),
+                                SizedBox(width: AppDimensions.spaceSmall),
+                                Text(
+                                  'Admin',
+                                  style:
+                                      (isMobile
+                                              ? AppTextStyles.bodyMedium
+                                              : AppTextStyles.heading4)
+                                          .copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _RoleCard extends StatelessWidget {
+class _RoleCard extends StatefulWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final Color color;
+  final Gradient gradient;
   final VoidCallback onTap;
+  final bool isCompact;
 
   const _RoleCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.color,
+    required this.gradient,
     required this.onTap,
+    this.isCompact = false,
   });
 
   @override
+  State<_RoleCard> createState() => _RoleCardState();
+}
+
+class _RoleCardState extends State<_RoleCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _hoverController;
+  late Animation<double> _elevationAnimation;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _hoverController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: AppDimensions.animationFast),
+    );
+    _elevationAnimation = Tween<double>(
+      begin: AppDimensions.elevationSmall,
+      end: AppDimensions.elevationMedium,
+    ).animate(_hoverController);
+  }
+
+  @override
+  void dispose() {
+    _hoverController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.cardBackground,
-      borderRadius: BorderRadius.circular(AppDimensions.radius),
-      elevation: AppDimensions.elevation,
-      shadowColor: AppColors.shadow,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radius),
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppDimensions.padding),
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() => _isHovered = true);
+        _hoverController.forward();
+      },
+      onExit: (_) {
+        setState(() => _isHovered = false);
+        _hoverController.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _elevationAnimation,
+        builder: (context, child) {
+          return Material(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+            elevation: _elevationAnimation.value,
+            shadowColor: widget.color.withOpacity(0.3),
+            child: InkWell(
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+              child: Container(
+                padding: EdgeInsets.all(
+                  widget.isCompact
+                      ? AppDimensions.padding
+                      : AppDimensions.paddingLarge,
+                ),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusLarge,
+                  ),
+                  border: Border.all(
+                    color: _isHovered
+                        ? widget.color.withOpacity(0.3)
+                        : Colors.transparent,
+                    width: 2,
+                  ),
                 ),
-                child: Icon(
-                  icon,
-                  size: AppDimensions.iconXLarge,
-                  color: color,
-                ),
-              ),
-              const SizedBox(width: AppDimensions.space),
-              Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.heading3.copyWith(color: color),
+                    Container(
+                      padding: EdgeInsets.all(
+                        widget.isCompact
+                            ? AppDimensions.paddingSmall
+                            : AppDimensions.paddingLarge,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: widget.gradient,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusMedium,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.color.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        size: widget.isCompact
+                            ? AppDimensions.iconLarge
+                            : AppDimensions.iconXLarge,
+                        color: Colors.white,
+                      ),
                     ),
-                    const SizedBox(height: AppDimensions.spaceXSmall),
+                    SizedBox(
+                      height: widget.isCompact
+                          ? AppDimensions.paddingSmall
+                          : AppDimensions.space,
+                    ),
                     Text(
-                      subtitle,
-                      style: AppTextStyles.bodyMedium.copyWith(
+                      widget.title,
+                      style:
+                          (widget.isCompact
+                                  ? AppTextStyles.heading4
+                                  : AppTextStyles.heading3)
+                              .copyWith(
+                                color: widget.color,
+                                fontWeight: FontWeight.bold,
+                              ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(
+                      height: widget.isCompact ? 4 : AppDimensions.spaceSmall,
+                    ),
+                    Text(
+                      widget.subtitle,
+                      style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(
+                      height: widget.isCompact
+                          ? AppDimensions.paddingSmall
+                          : AppDimensions.space,
+                    ),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: widget.color,
+                      size: widget.isCompact
+                          ? AppDimensions.iconSmall
+                          : AppDimensions.iconSizeMedium,
                     ),
                   ],
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: color,
-                size: AppDimensions.iconSmall,
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
