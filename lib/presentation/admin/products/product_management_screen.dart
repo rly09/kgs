@@ -357,7 +357,6 @@ class ProductManagementScreen extends ConsumerWidget {
                         
                         try {
                           final productService = ref.read(productServiceProvider);
-                          final adminService = ref.read(adminServiceProvider);
                           
                           // Upload image if selected
                           if (selectedImage != null) {
@@ -365,9 +364,9 @@ class ProductManagementScreen extends ConsumerWidget {
                             // Use XFile.name for better cross-platform support
                             final filename = selectedImage!.name;
                             print('Selected image filename: $filename'); // Debug
-                            uploadedImagePath = await adminService.uploadProductImage(
-                              bytes: bytes,
-                              filename: filename,
+                            uploadedImagePath = await productService.uploadProductImage(
+                              bytes.toList(),
+                              filename,
                             );
                           }
                           

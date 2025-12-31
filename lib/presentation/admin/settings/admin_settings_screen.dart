@@ -14,15 +14,12 @@ class AdminSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
-  final _phoneFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   
-  final _newPhoneController = TextEditingController();
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  bool _isUpdatingPhone = false;
   bool _isUpdatingPassword = false;
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
@@ -30,45 +27,10 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   @override
   void dispose() {
-    _newPhoneController.dispose();
     _oldPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _updatePhone() async {
-    if (!_phoneFormKey.currentState!.validate()) return;
-
-    setState(() => _isUpdatingPhone = true);
-
-    try {
-      final adminService = ref.read(adminServiceProvider);
-      await adminService.updatePhone(_newPhoneController.text.trim());
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Phone number updated successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        _newPhoneController.clear();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isUpdatingPhone = false);
-      }
-    }
   }
 
   Future<void> _updatePassword() async {
@@ -147,63 +109,12 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                       const SizedBox(height: AppDimensions.spaceSmall),
                       Row(
                         children: [
-                          const Icon(Icons.phone_outlined, color: AppColors.textSecondary),
+                          const Icon(Icons.email_outlined, color: AppColors.textSecondary),
                           const SizedBox(width: AppDimensions.spaceSmall),
-                          Text('Phone: ${admin?.phone ?? "N/A"}', style: AppTextStyles.bodyMedium),
+                          Text('Email: ${admin?.email ?? "N/A"}', style: AppTextStyles.bodyMedium),
                         ],
                       ),
                     ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppDimensions.spaceLarge),
-
-              // Update Phone Section
-              Text('Update Phone Number', style: AppTextStyles.heading3),
-              const SizedBox(height: AppDimensions.space),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimensions.padding),
-                  child: Form(
-                    key: _phoneFormKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _newPhoneController,
-                          keyboardType: TextInputType.phone,
-                          maxLength: 10,
-                          decoration: const InputDecoration(
-                            labelText: 'New Phone Number',
-                            prefixIcon: Icon(Icons.phone_outlined),
-                            counterText: '',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Phone number is required';
-                            }
-                            if (value.length != 10) {
-                              return 'Phone number must be 10 digits';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.space),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isUpdatingPhone ? null : _updatePhone,
-                            child: _isUpdatingPhone
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Text('Update Phone'),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),

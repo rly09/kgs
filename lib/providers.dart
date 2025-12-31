@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'data/api/api_client.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/category_service.dart';
 import 'data/services/product_service.dart';
@@ -13,34 +12,29 @@ import 'data/models/product_model.dart';
 import 'data/models/order_model.dart';
 import 'presentation/customer/cart/cart_notifier.dart';
 
-// API Client provider
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
-});
-
-// Service providers
+// Service providers (no longer need API client)
 final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService(ref.read(apiClientProvider));
+  return AuthService();
 });
 
 final categoryServiceProvider = Provider<CategoryService>((ref) {
-  return CategoryService(ref.read(apiClientProvider));
+  return CategoryService();
 });
 
 final productServiceProvider = Provider<ProductService>((ref) {
-  return ProductService(ref.read(apiClientProvider));
+  return ProductService();
 });
 
 final orderServiceProvider = Provider<OrderService>((ref) {
-  return OrderService(ref.read(apiClientProvider));
+  return OrderService();
 });
 
 final settingsServiceProvider = Provider<SettingsService>((ref) {
-  return SettingsService(ref.read(apiClientProvider));
+  return SettingsService();
 });
 
 final adminServiceProvider = Provider<AdminService>((ref) {
-  return AdminService(ref.read(apiClientProvider));
+  return AdminService();
 });
 
 // Admin authentication provider
@@ -63,27 +57,28 @@ class AdminAuthNotifier extends StateNotifier<AdminModel?> {
     // Note: We don't have the admin details stored, so we'll need to fetch them after login
   }
 
-  Future<bool> login(String phone, String password) async {
+  Future<bool> login(String email, String password) async {
     try {
-      final authResponse = await _authService.adminLogin(phone, password);
+      final authResponse = await _authService.adminLogin(email, password);
       
       // Extract admin data from auth response
       final userData = authResponse.user;
-      final adminId = userData?['id'] as int? ?? 0;
-      final adminName = userData?['name'] as String? ?? 'Admin';
+      if (userData == null) {
+        return false;
+      }
       
       // Create admin model with actual ID from backend
       state = AdminModel(
-        id: adminId,
-        phone: phone,
-        name: adminName,
+        id: userData.id,
+        email: email,
+        name: userData.name,
         createdAt: DateTime.now(),
       );
       
       // Save admin info to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('admin_phone', phone);
-      await prefs.setString('admin_name', adminName);
+      await prefs.setString('admin_email', email);
+      await prefs.setString('admin_name', userData.name);
       
       return true;
     } catch (e) {
@@ -97,7 +92,7 @@ class AdminAuthNotifier extends StateNotifier<AdminModel?> {
     
     // Clear saved admin info
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('admin_phone');
+    await prefs.remove('admin_email');
     await prefs.remove('admin_name');
   }
 }
@@ -139,11 +134,13 @@ class CustomerAuthNotifier extends StateNotifier<CustomerModel?> {
       
       // Extract customer data from auth response
       final userData = authResponse.user;
-      final customerId = userData?['id'] as int? ?? 0;
+      if (userData == null) {
+        throw Exception('Login failed');
+      }
       
       // Create customer model with actual ID from backend
       final customer = CustomerModel(
-        id: customerId,
+        id: userData.id,
         phone: phone,
         name: name,
         createdAt: DateTime.now(),

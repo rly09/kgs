@@ -71,7 +71,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                     style: AppTextStyles.heading3.copyWith(color: Colors.white),
                   ),
                   Text(
-                    ref.watch(adminAuthProvider)?.phone ?? '',
+                    ref.watch(adminAuthProvider)?.email ?? '',
                     style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
                   ),
                 ],

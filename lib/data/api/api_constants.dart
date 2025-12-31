@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base URL - Production backend
-  static const String baseUrl = 'https://kgs-backend-ej2z.onrender.com';
+  static const String baseUrl = 'https://backend-supabase-omega.vercel.app';
   static const String apiPrefix = '/api';
   
   // Timeout settings

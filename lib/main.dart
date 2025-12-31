@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'core/supabase_config.dart';
 import 'presentation/role_selection/role_selection_screen.dart';
 import 'presentation/admin/admin_main_screen.dart';
 import 'presentation/customer/customer_main_screen.dart';
 import 'providers.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await SupabaseConfig.initialize();
+  
   runApp(const ProviderScope(child: KGSApp()));
 }
 

@@ -16,14 +16,14 @@ class AdminLoginScreen extends ConsumerStatefulWidget {
 
 class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -35,7 +35,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
     final success = await ref
         .read(adminAuthProvider.notifier)
-        .login(_phoneController.text, _passwordController.text);
+        .login(_emailController.text.trim(), _passwordController.text);
 
     setState(() => _isLoading = false);
 
@@ -48,7 +48,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid phone number or password'),
+          content: Text('Invalid email or password'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -106,18 +106,16 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 
                 const SizedBox(height: AppDimensions.spaceXXLarge),
                 
-                // Phone Number Field
+                // Email Field
                 TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    hintText: '9999999999',
-                    prefixIcon: Icon(Icons.phone_rounded),
-                    counterText: '',
+                    labelText: 'Email',
+                    hintText: 'admin@kpgshop.com',
+                    prefixIcon: Icon(Icons.email_rounded),
                   ),
-                  validator: Validators.validatePhone,
+                  validator: Validators.validateEmail,
                 ),
                 
                 const SizedBox(height: AppDimensions.space),

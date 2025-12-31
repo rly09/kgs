@@ -1,51 +1,123 @@
-import '../api/api_client.dart';
-import '../api/api_constants.dart';
+import 'dart:typed_data';
+import '../../core/supabase_config.dart';
 import '../models/product_model.dart';
 
 class ProductService {
-  final ApiClient _apiClient;
+  final _supabase = SupabaseConfig.client;
   
-  ProductService(this._apiClient);
-  
+  /// Get all products, optionally filtered by category
   Future<List<ProductModel>> getProducts({int? categoryId}) async {
-    final response = await _apiClient.get(
-      ApiConstants.products,
-      queryParameters: categoryId != null ? {'category_id': categoryId} : null,
-    );
-    final List<dynamic> data = response.data as List<dynamic>;
-    return data.map((json) => ProductModel.fromJson(json)).toList();
+    try {
+      var query = _supabase.from('products').select();
+      
+      if (categoryId != null) {
+        query = query.eq('category_id', categoryId);
+      }
+      
+      final response = await query.order('created_at', ascending: false);
+      
+      return (response as List)
+          .map((json) => ProductModel.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch products: ${e.toString()}');
+    }
   }
   
+  /// Get single product by ID
   Future<ProductModel> getProduct(int id) async {
-    final response = await _apiClient.get(ApiConstants.productById(id));
-    return ProductModel.fromJson(response.data);
+    try {
+      final response = await _supabase
+          .from('products')
+          .select()
+          .eq('id', id)
+          .single();
+      
+      return ProductModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to fetch product: ${e.toString()}');
+    }
   }
   
+  /// Create new product
   Future<ProductModel> createProduct(ProductCreate product) async {
-    final response = await _apiClient.post(
-      ApiConstants.products,
-      data: product.toJson(),
-    );
-    return ProductModel.fromJson(response.data);
+    try {
+      final response = await _supabase
+          .from('products')
+          .insert(product.toJson())
+          .select()
+          .single();
+      
+      return ProductModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to create product: ${e.toString()}');
+    }
   }
   
+  /// Update product
   Future<ProductModel> updateProduct(int id, ProductUpdate product) async {
-    final response = await _apiClient.put(
-      ApiConstants.productById(id),
-      data: product.toJson(),
-    );
-    return ProductModel.fromJson(response.data);
+    try {
+      final response = await _supabase
+          .from('products')
+          .update(product.toJson())
+          .eq('id', id)
+          .select()
+          .single();
+      
+      return ProductModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to update product: ${e.toString()}');
+    }
   }
   
+  /// Update product stock
   Future<ProductModel> updateStock(int id, int stock) async {
-    final response = await _apiClient.put(
-      ApiConstants.productStock(id),
-      data: {'stock': stock},
-    );
-    return ProductModel.fromJson(response.data);
+    try {
+      final response = await _supabase
+          .from('products')
+          .update({'stock': stock, 'is_available': stock > 0})
+          .eq('id', id)
+          .select()
+          .single();
+      
+      return ProductModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to update stock: ${e.toString()}');
+    }
   }
   
+  /// Delete product
   Future<void> deleteProduct(int id) async {
-    await _apiClient.delete(ApiConstants.productById(id));
+    try {
+      await _supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
+    } catch (e) {
+      throw Exception('Failed to delete product: ${e.toString()}');
+    }
+  }
+  
+  /// Upload product image to Supabase Storage
+  Future<String> uploadProductImage(List<int> imageBytes, String fileName) async {
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final uniqueFileName = '${timestamp}_$fileName';
+      
+      // Convert List<int> to Uint8List
+      final uint8List = Uint8List.fromList(imageBytes);
+      
+      await _supabase.storage
+          .from('product-images')
+          .uploadBinary(uniqueFileName, uint8List);
+      
+      final publicUrl = _supabase.storage
+          .from('product-images')
+          .getPublicUrl(uniqueFileName);
+      
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload image: ${e.toString()}');
+    }
   }
 }

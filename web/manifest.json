@@ -1,6 +1,6 @@
 {
-    "name": "kpg_shop",
-    "short_name": "kpg_shop",
+    "name": "Kgs",
+    "short_name": "Kgs",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -78,7 +78,7 @@ class OrderModel {
       paymentMode: json['payment_mode'] as String,
       note: json['note'] as String?,
       status: json['status'] as String,
-      items: (json['items'] as List<dynamic>?)
+      items: (json['order_items'] as List<dynamic>?)
               ?.map((item) => OrderItemModel.fromJson(item as Map<String, dynamic>))
               .toList() ??
           [],
@@ -134,8 +134,8 @@ class OrderCreate {
       'delivery_address': deliveryAddress,
       'total_amount': totalAmount,
       'payment_mode': paymentMode,
-      'note': note,
-      'items': items.map((item) => item.toJson()).toList(),
+      if (note != null) 'note': note,
+      // items are inserted separately into order_items table
     };
   }
 }
