@@ -315,7 +315,7 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                     color: AppColors.surfaceLight,
                     child: widget.product.imagePath != null
                         ? Image.network(
-                            'https://kgs-backend-ej2z.onrender.com${widget.product.imagePath}',
+                            widget.product.imagePath!, // Already full Supabase URL
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
@@ -440,31 +440,68 @@ class _ProductCardState extends ConsumerState<_ProductCard>
               ),
 
               // Product Details
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.product.name,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: nameFontSize,
+                  // Product info
+                  Padding(
+                    padding: const EdgeInsets.all(AppDimensions.padding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.product.name,
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        Formatters.formatCurrency(widget.product.price),
-                        style: AppTextStyles.price.copyWith(fontSize: priceFontSize),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              Formatters.formatCurrency(widget.product.price),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            // Stock display
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: widget.product.stock > 0
+                                    ? AppColors.success.withOpacity(0.1)
+                                    : AppColors.error.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                              ),
+                              child: Builder(
+                                builder: (context) {
+                                  // Calculate remaining stock (total - in cart)
+                                  final inCartQty = cart.items[widget.product.id]?.quantity ?? 0;
+                                  final remainingStock = widget.product.stock - inCartQty;
+                                  
+                                  return Text(
+                                    remainingStock > 0
+                                        ? 'Stock: $remainingStock'
+                                        : 'Out of Stock',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: remainingStock > 0
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
             ],
           ),
         ),

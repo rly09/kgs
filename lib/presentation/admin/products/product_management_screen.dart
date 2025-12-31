@@ -310,7 +310,7 @@ class ProductManagementScreen extends ConsumerWidget {
                             )
                           : uploadedImagePath != null
                               ? Image.network(
-                                  'https://kgs-backend-ej2z.onrender.com$uploadedImagePath',
+                                  uploadedImagePath!, // Already full Supabase URL
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => const Center(
                                     child: Icon(Icons.image_not_supported, size: 48),

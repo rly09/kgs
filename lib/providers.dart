@@ -181,16 +181,16 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
   return await categoryService.getCategories();
 });
 
-// Products provider
-final productsProvider = FutureProvider<List<ProductModel>>((ref) async {
-  final productService = ref.read(productServiceProvider);
-  return await productService.getProducts();
+// Products provider with real-time updates
+final productsProvider = StreamProvider<List<ProductModel>>((ref) {
+  final productService = ref.watch(productServiceProvider);
+  return productService.getProductsStream();
 });
 
-// Products by category provider
-final productsByCategoryProvider = FutureProvider.family<List<ProductModel>, int>((ref, categoryId) async {
-  final productService = ref.read(productServiceProvider);
-  return await productService.getProducts(categoryId: categoryId);
+// Products by category with real-time updates
+final productsByCategoryProvider = StreamProvider.family<List<ProductModel>, int?>((ref, categoryId) {
+  final productService = ref.watch(productServiceProvider);
+  return productService.getProductsByCategoryStream(categoryId);
 });
 
 // Discount provider

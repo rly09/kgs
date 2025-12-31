@@ -24,6 +24,31 @@ class ProductService {
     }
   }
   
+  /// Get products stream with real-time updates
+  Stream<List<ProductModel>> getProductsStream() {
+    return _supabase
+        .from('products')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((data) => data.map((json) => ProductModel.fromJson(json)).toList());
+  }
+  
+  /// Get products by category stream with real-time updates
+  Stream<List<ProductModel>> getProductsByCategoryStream(int? categoryId) {
+    var query = _supabase
+        .from('products')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false);
+    
+    return query.map((data) {
+      final products = data.map((json) => ProductModel.fromJson(json)).toList();
+      if (categoryId == null) {
+        return products;
+      }
+      return products.where((p) => p.categoryId == categoryId).toList();
+    });
+  }
+  
   /// Get single product by ID
   Future<ProductModel> getProduct(int id) async {
     try {
@@ -86,7 +111,7 @@ class ProductService {
     }
   }
   
-  /// Delete product
+  /// Delete product (hard delete)
   Future<void> deleteProduct(int id) async {
     try {
       await _supabase

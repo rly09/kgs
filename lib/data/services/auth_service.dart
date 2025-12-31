@@ -22,22 +22,21 @@ class AuthService {
           .eq('email', email)
           .single();
       
-      // Verify password using bcrypt-like comparison
-      final storedHash = response['password_hash'] as String;
-      if (!_verifyPassword(password, storedHash)) {
+      // Direct password comparison (plain text)
+      if (response['password_hash'] != password) {
         throw Exception('Incorrect email or password');
       }
       
       // Create auth response
       final user = UserData(
         id: response['id'] as int,
-        email: response['email'] as String,
+        email: email,
         name: response['name'] as String,
         type: 'admin',
       );
       
       // Generate simple token (in production, use proper JWT)
-      final token = _generateToken(user);
+      final token = 'admin_token_${response['id']}'; // Simplified token
       
       // Save to storage
       await _storage.write(key: _tokenKey, value: token);

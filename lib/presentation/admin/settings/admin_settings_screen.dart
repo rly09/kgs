@@ -14,12 +14,18 @@ class AdminSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
+  final _nameFormKey = GlobalKey<FormState>();
+  final _emailFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
+  bool _isUpdatingName = false;
+  bool _isUpdatingEmail = false;
   bool _isUpdatingPassword = false;
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
@@ -27,10 +33,82 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
     _oldPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateName() async {
+    if (!_nameFormKey.currentState!.validate()) return;
+
+    setState(() => _isUpdatingName = true);
+
+    try {
+      final adminService = ref.read(adminServiceProvider);
+      await adminService.updateName(_nameController.text.trim());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Name updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        // Refresh admin auth state
+        ref.invalidate(adminAuthProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingName = false);
+      }
+    }
+  }
+
+  Future<void> _updateEmail() async {
+    if (!_emailFormKey.currentState!.validate()) return;
+
+    setState(() => _isUpdatingEmail = true);
+
+    try {
+      final adminService = ref.read(adminServiceProvider);
+      await adminService.updateEmail(_emailController.text.trim());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        // Refresh admin auth state
+        ref.invalidate(adminAuthProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingEmail = false);
+      }
+    }
   }
 
   Future<void> _updatePassword() async {
@@ -115,6 +193,100 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                         ],
                       ),
                     ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppDimensions.spaceLarge),
+
+              // Update Name Section
+              Text('Update Name', style: AppTextStyles.heading3),
+              const SizedBox(height: AppDimensions.space),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.padding),
+                  child: Form(
+                    key: _nameFormKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'New Name',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Name is required';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppDimensions.space),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isUpdatingName ? null : _updateName,
+                            child: _isUpdatingName
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Update Name'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppDimensions.spaceLarge),
+
+              // Update Email Section
+              Text('Update Email', style: AppTextStyles.heading3),
+              const SizedBox(height: AppDimensions.space),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.padding),
+                  child: Form(
+                    key: _emailFormKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'New Email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Email is required';
+                            }
+                            if (!value.contains('@')) {
+                              return 'Enter a valid email';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppDimensions.space),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isUpdatingEmail ? null : _updateEmail,
+                            child: _isUpdatingEmail
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Update Email'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -1,7 +1,7 @@
 class OrderItemModel {
   final int? id;
   final int? orderId;
-  final int productId;
+  final int productId; // Required when creating, but can be null in DB after product deletion
   final String productName;
   final int quantity;
   final double priceAtOrder;
@@ -19,7 +19,7 @@ class OrderItemModel {
     return OrderItemModel(
       id: json['id'] as int?,
       orderId: json['order_id'] as int?,
-      productId: json['product_id'] as int,
+      productId: json['product_id'] as int? ?? 0, // Default to 0 if null (deleted product)
       productName: json['product_name'] as String,
       quantity: json['quantity'] as int,
       priceAtOrder: (json['price_at_order'] as num).toDouble(),

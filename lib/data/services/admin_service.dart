@@ -77,31 +77,77 @@ class AdminService {
     required String newPassword,
   }) async {
     try {
-      // Get current admin ID from auth
+      // Get current admin from auth
       final currentUser = await _authService.getCurrentUser();
       if (currentUser == null) {
         throw Exception('Not authenticated');
       }
       
-      // Get current admin
+      // Get admin from database
       final admin = await _supabase
           .from('admins')
-          .select('password_hash')
+          .select()
           .eq('id', currentUser.id)
           .single();
       
-      // In production, verify old password with bcrypt
-      // For now, just update (you'll need to hash the new password)
+      // Verify old password (simplified - in production use bcrypt)
+      if (admin['password_hash'] != oldPassword) {
+        throw Exception('Incorrect current password');
+      }
       
-      // Update password (you'll need to hash this properly)
+      // Update password
       await _supabase
           .from('admins')
-          .update({'password_hash': newPassword}) // TODO: Hash this!
+          .update({'password_hash': newPassword})
           .eq('id', currentUser.id);
       
       return {'message': 'Password updated successfully'};
     } catch (e) {
       throw Exception('Failed to update password: ${e.toString()}');
+    }
+  }
+  
+  /// Update admin name
+  Future<Map<String, dynamic>> updateName(String newName) async {
+    try {
+      final currentUser = await _authService.getCurrentUser();
+      if (currentUser == null) {
+        throw Exception('Not authenticated');
+      }
+      
+      await _supabase
+          .from('admins')
+          .update({'name': newName})
+          .eq('id', currentUser.id);
+      
+      return {
+        'message': 'Name updated successfully',
+        'name': newName,
+      };
+    } catch (e) {
+      throw Exception('Failed to update name: ${e.toString()}');
+    }
+  }
+  
+  /// Update admin email
+  Future<Map<String, dynamic>> updateEmail(String newEmail) async {
+    try {
+      final currentUser = await _authService.getCurrentUser();
+      if (currentUser == null) {
+        throw Exception('Not authenticated');
+      }
+      
+      await _supabase
+          .from('admins')
+          .update({'email': newEmail})
+          .eq('id', currentUser.id);
+      
+      return {
+        'message': 'Email updated successfully',
+        'email': newEmail,
+      };
+    } catch (e) {
+      throw Exception('Failed to update email: ${e.toString()}');
     }
   }
 }

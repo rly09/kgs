@@ -75,7 +75,7 @@ CREATE INDEX idx_orders_created ON orders(created_at DESC);
 CREATE TABLE order_items (\
   id BIGSERIAL PRIMARY KEY,
   order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+  product_id BIGINT REFERENCES products(id) ON DELETE SET NULL,
   product_name VARCHAR(200) NOT NULL,
   quantity INTEGER NOT NULL,
   price_at_order DECIMAL(10, 2) NOT NULL
@@ -154,9 +154,9 @@ CREATE TRIGGER auto_disable_out_of_stock
 -- ============================================
 
 -- Insert default admin (email: admin@kpgshop.com, password: admin123)
--- Password hash generated with bcrypt
+-- Using plain text password for simplicity (hash in production!)
 INSERT INTO admins (email, password_hash, name)
-VALUES ('admin@kpgshop.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqNk5rXKZK', 'Admin User');
+VALUES ('admin@kpgshop.com', 'admin123', 'Admin User');
 
 -- Insert default discount setting
 INSERT INTO settings (key, value)
