@@ -448,8 +448,9 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                       children: [
                         Text(
                           widget.product.name,
-                          style: AppTextStyles.bodyLarge.copyWith(
+                          style: AppTextStyles.bodyMedium.copyWith(
                             fontWeight: FontWeight.w600,
+                            fontSize: 13,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -460,16 +461,17 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                           children: [
                             Text(
                               Formatters.formatCurrency(widget.product.price),
-                              style: AppTextStyles.bodyMedium.copyWith(
+                              style: AppTextStyles.bodySmall.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
+                                fontSize: 12,
                               ),
                             ),
                             // Stock display
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                                horizontal: 6,
+                                vertical: 3,
                               ),
                               decoration: BoxDecoration(
                                 color: widget.product.stock > 0
@@ -492,6 +494,7 @@ class _ProductCardState extends ConsumerState<_ProductCard>
                                           ? AppColors.success
                                           : AppColors.error,
                                       fontWeight: FontWeight.w600,
+                                      fontSize: 10,
                                     ),
                                   );
                                 },
