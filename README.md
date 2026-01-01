@@ -1,16 +1,51 @@
-# kpg_shop
+# KGS Shop - Customer App
 
-A new Flutter project.
+Customer-facing mobile application for KGS Shop.
 
-## Getting Started
+## Features
+- Browse products by category
+- Search and filter
+- Shopping cart
+- GPS location picker for delivery
+- Secure checkout
+- Order tracking
+- Order history
 
-This project is a starting point for a Flutter application.
+## Setup
 
-A few resources to get you started if this is your first Flutter project:
+### Prerequisites
+- Flutter SDK 3.5.4+
+- Android Studio / VS Code
+- Supabase account
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
+1. Clone repository
+2. Copy `.env.example` to `.env`
+3. Add Supabase credentials
+4. Run `flutter pub get`
+5. Run `flutter run`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Environment Variables
+Create `.env` file:
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
+```
+
+## Project Structure
+```
+lib/
+├── main.dart
+├── presentation/customer/
+├── data/
+└── core/
+```
+
+## Build
+```bash
+flutter build apk --release
+```
+
+## Related
+- Admin app: `d:\kpg\kgs-admin\`
+- Shared database: Supabase

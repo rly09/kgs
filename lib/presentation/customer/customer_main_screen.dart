@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers.dart';
-import '../role_selection/role_selection_screen.dart';
+import 'auth/customer_login_screen.dart';
 import 'home/customer_home_screen.dart';
 import 'cart/cart_screen.dart';
 import 'orders/customer_orders_screen.dart';
@@ -43,7 +43,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               ref.read(customerAuthProvider.notifier).logout();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
-                  builder: (context) => const RoleSelectionScreen(),
+                  builder: (context) => const CustomerLoginScreen(),
                 ),
                 (route) => false,
               );

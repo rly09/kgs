@@ -12,7 +12,6 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../providers.dart';
 import '../../../data/models/order_model.dart';
-import '../../role_selection/role_selection_screen.dart';
 import '../widgets/location_picker_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
