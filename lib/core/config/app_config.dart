@@ -6,10 +6,10 @@ class AppConfig {
 
   // Default shop location - UPDATE THIS WITH YOUR ACTUAL SHOP COORDINATES
   // Example: Delhi, India
-  static const LatLng shopLocation = LatLng(26.935546, 75.764841);
+  static const LatLng shopLocation = LatLng(26.869425, 88.739276);
   
   // Shop address for display
-  static const String shopAddress = 'KGS Shop, Jaipur, Rajasthan';
+  static const String shopAddress = 'KGS Shop, Mal Bazar, West Bengal';
   
   // You can update these coordinates to your actual shop location:
   // 1. Go to https://www.openstreetmap.org/
