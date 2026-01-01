@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:io';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -11,6 +13,7 @@ import '../../../core/utils/responsive_helper.dart';
 import '../../../providers.dart';
 import '../../../data/models/order_model.dart';
 import '../../role_selection/role_selection_screen.dart';
+import '../widgets/location_picker_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -29,6 +32,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _paymentMode = 'COD';
   File? _paymentProof;
   bool _isPlacingOrder = false;
+  LatLng? _selectedLocation;
 
   @override
   void initState() {
@@ -48,6 +52,84 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     _addressController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enable location services'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Location permission denied'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission permanently denied. Please enable in settings.'),
+              backgroundColor: AppColors.error,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _selectedLocation = LatLng(position.latitude, position.longitude);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Location captured: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error getting location: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _pickPaymentProof() async {
@@ -94,6 +176,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         customerName: _nameController.text,
         customerPhone: _phoneController.text,
         deliveryAddress: _addressController.text,
+        deliveryLatitude: _selectedLocation?.latitude,
+        deliveryLongitude: _selectedLocation?.longitude,
         note: _noteController.text.isEmpty ? null : _noteController.text,
         paymentMode: _paymentMode,
         totalAmount: finalTotal,
@@ -247,6 +331,84 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 maxLines: 3,
                 validator: Validators.validateAddress,
               ),
+              const SizedBox(height: AppDimensions.spaceSmall),
+              
+              // Location Buttons Row
+              Row(
+                children: [
+                  // GPS Auto-Capture Button
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _getCurrentLocation,
+                      icon: const Icon(Icons.my_location, size: 20),
+                      label: const Text('Use GPS'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.spaceSmall),
+                  // Map Picker Button
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final location = await Navigator.push<LatLng>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LocationPickerScreen(
+                              initialLocation: _selectedLocation,
+                            ),
+                          ),
+                        );
+                        
+                        if (location != null) {
+                          setState(() {
+                            _selectedLocation = location;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Location selected: ${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}'),
+                              backgroundColor: AppColors.success,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.map_outlined, size: 20),
+                      label: const Text('Pick on Map'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Location Status
+              if (_selectedLocation != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppDimensions.spaceSmall),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Location set: ${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)}',
+                          style: const TextStyle(
+                            color: AppColors.success,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              
               const SizedBox(height: AppDimensions.space),
               _buildTextField(
                 controller: _noteController,

@@ -6,6 +6,7 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../providers.dart';
 import '../../../data/models/order_model.dart';
+import '../delivery/delivery_map_screen.dart';
 
 class OrderManagementScreen extends ConsumerStatefulWidget {
   const OrderManagementScreen({super.key});
@@ -52,6 +53,11 @@ class _OrderManagementScreenState extends ConsumerState<OrderManagementScreen> {
                   label: 'Confirmed',
                   isSelected: _selectedFilter == 'CONFIRMED',
                   onTap: () => setState(() => _selectedFilter = 'CONFIRMED'),
+                ),
+                _FilterChip(
+                  label: 'Out for Delivery',
+                  isSelected: _selectedFilter == 'OUT_FOR_DELIVERY',
+                  onTap: () => setState(() => _selectedFilter = 'OUT_FOR_DELIVERY'),
                 ),
                 _FilterChip(
                   label: 'Delivered',
@@ -196,6 +202,8 @@ class _OrderCard extends ConsumerWidget {
         return AppColors.warning;
       case 'CONFIRMED':
         return AppColors.info;
+      case 'OUT_FOR_DELIVERY':
+        return AppColors.primary;
       case 'DELIVERED':
         return AppColors.success;
       case 'CANCELLED':
@@ -434,11 +442,53 @@ class _OrderCard extends ConsumerWidget {
                               ),
                             ),
                           if (order.status == 'CONFIRMED')
+                            Column(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    // Update status to out_for_delivery
+                                    await _updateStatus(context, ref, 'OUT_FOR_DELIVERY', 'Order is out for delivery');
+                                    
+                                    // Navigate to delivery map
+                                    if (context.mounted) {
+                                      Navigator.pop(context); // Close bottom sheet
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => DeliveryMapScreen(order: order),
+                                        ),
+                                      ).then((delivered) {
+                                        if (delivered == true) {
+                                          ref.refresh(ordersProvider);
+                                        }
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.delivery_dining),
+                                  label: const Text('Out for Delivery'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: AppDimensions.spaceSmall),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    _updateStatus(context, ref, 'DELIVERED', 'Order delivered');
+                                  },
+                                  icon: const Icon(Icons.check_circle),
+                                  label: const Text('Mark as Delivered'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (order.status == 'OUT_FOR_DELIVERY')
                             ElevatedButton.icon(
                               onPressed: () {
                                 _updateStatus(context, ref, 'DELIVERED', 'Order delivered');
                               },
-                              icon: const Icon(Icons.local_shipping_outlined),
+                              icon: const Icon(Icons.check_circle),
                               label: const Text('Mark as Delivered'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.success,
@@ -476,7 +526,10 @@ class _OrderCard extends ConsumerWidget {
       ref.refresh(ordersProvider);
       
       if (context.mounted) {
-        Navigator.pop(context);
+        // Don't pop if going to delivery map
+        if (status != 'OUT_FOR_DELIVERY') {
+          Navigator.pop(context);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),

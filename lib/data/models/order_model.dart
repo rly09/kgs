@@ -44,6 +44,8 @@ class OrderModel {
   final String customerName;
   final String customerPhone;
   final String deliveryAddress;
+  final double? deliveryLatitude;
+  final double? deliveryLongitude;
   final double totalAmount;
   final String paymentMode;
   final String? note;
@@ -58,6 +60,8 @@ class OrderModel {
     required this.customerName,
     required this.customerPhone,
     required this.deliveryAddress,
+    this.deliveryLatitude,
+    this.deliveryLongitude,
     required this.totalAmount,
     required this.paymentMode,
     this.note,
@@ -74,6 +78,8 @@ class OrderModel {
       customerName: json['customer_name'] as String,
       customerPhone: json['customer_phone'] as String,
       deliveryAddress: json['delivery_address'] as String,
+      deliveryLatitude: json['delivery_latitude'] as double?,
+      deliveryLongitude: json['delivery_longitude'] as double?,
       totalAmount: (json['total_amount'] as num).toDouble(),
       paymentMode: json['payment_mode'] as String,
       note: json['note'] as String?,
@@ -94,6 +100,8 @@ class OrderModel {
       'customer_name': customerName,
       'customer_phone': customerPhone,
       'delivery_address': deliveryAddress,
+      'delivery_latitude': deliveryLatitude,
+      'delivery_longitude': deliveryLongitude,
       'total_amount': totalAmount,
       'payment_mode': paymentMode,
       'note': note,
@@ -110,6 +118,8 @@ class OrderCreate {
   final String customerName;
   final String customerPhone;
   final String deliveryAddress;
+  final double? deliveryLatitude;
+  final double? deliveryLongitude;
   final double totalAmount;
   final String paymentMode;
   final String? note;
@@ -120,6 +130,8 @@ class OrderCreate {
     required this.customerName,
     required this.customerPhone,
     required this.deliveryAddress,
+    this.deliveryLatitude,
+    this.deliveryLongitude,
     required this.totalAmount,
     required this.paymentMode,
     this.note,
@@ -132,6 +144,8 @@ class OrderCreate {
       'customer_name': customerName,
       'customer_phone': customerPhone,
       'delivery_address': deliveryAddress,
+      if (deliveryLatitude != null) 'delivery_latitude': deliveryLatitude,
+      if (deliveryLongitude != null) 'delivery_longitude': deliveryLongitude,
       'total_amount': totalAmount,
       'payment_mode': paymentMode,
       if (note != null) 'note': note,
