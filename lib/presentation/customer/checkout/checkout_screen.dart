@@ -447,8 +447,145 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
 
-              if (_paymentMode == 'ONLINE') ...[
+
+              if (_paymentMode == 'ONLINE') ...[ 
                 const SizedBox(height: AppDimensions.space),
+                
+                // Payment QR Code Display
+                FutureBuilder<String?>(
+                  future: ref.read(settingsServiceProvider).getPaymentQrUrl(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError || snapshot.data == null) {
+                      return Container(
+                        padding: const EdgeInsets.all(AppDimensions.padding),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                          border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Payment QR code not available. Please contact the shop or choose Cash on Delivery.',
+                                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Display QR Code
+                    return Container(
+                      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.qr_code_2, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Scan to Pay',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimensions.space),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                            child: Image.network(
+                              snapshot.data!,
+                              height: 250,
+                              width: 250,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return SizedBox(
+                                  height: 250,
+                                  width: 250,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 250,
+                                  width: 250,
+                                  color: AppColors.surfaceLight,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Failed to load QR code',
+                                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.space),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.info.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, color: AppColors.info, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Scan this QR code to make payment, then upload proof below',
+                                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: AppDimensions.space),
+                
+                // Payment Proof Upload
                 InkWell(
                   onTap: _pickPaymentProof,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -483,6 +620,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 ),
               ],
+
 
               const SizedBox(height: AppDimensions.spaceLarge),
 

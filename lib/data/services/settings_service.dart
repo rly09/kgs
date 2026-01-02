@@ -54,4 +54,24 @@ class SettingsService {
       throw Exception('Failed to update discount: ${e.toString()}');
     }
   }
+
+  /// Get payment QR URL
+  Future<String?> getPaymentQrUrl() async {
+    try {
+      final response = await _supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'payment_qr_url')
+          .maybeSingle();
+      
+      if (response == null) {
+        return null;
+      }
+      
+      return response['value'] as String?;
+    } catch (e) {
+      throw Exception('Failed to fetch payment QR URL: ${e.toString()}');
+    }
+  }
 }
+
