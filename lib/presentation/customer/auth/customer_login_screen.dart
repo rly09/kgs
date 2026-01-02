@@ -51,9 +51,6 @@ class _CustomerLoginScreenState extends ConsumerState<CustomerLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Customer Login'),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
@@ -65,17 +62,9 @@ class _CustomerLoginScreenState extends ConsumerState<CustomerLoginScreen> {
                 const SizedBox(height: AppDimensions.spaceXXLarge),
                 
                 // Icon
-                Container(
-                  padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.shopping_bag_rounded,
-                    size: 80,
-                    color: AppColors.accent,
-                  ),
+                SizedBox(
+                    height: 250,
+                    child: Image.asset("assets/app_icon.png")
                 ),
                 
                 const SizedBox(height: AppDimensions.spaceXLarge),
@@ -103,7 +92,6 @@ class _CustomerLoginScreenState extends ConsumerState<CustomerLoginScreen> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Your Name',
-                    hintText: 'Enter your name',
                     prefixIcon: Icon(Icons.person_rounded),
                   ),
                   validator: Validators.validateName,
@@ -118,7 +106,6 @@ class _CustomerLoginScreenState extends ConsumerState<CustomerLoginScreen> {
                   maxLength: 10,
                   decoration: const InputDecoration(
                     labelText: 'Phone Number',
-                    hintText: '9876543210',
                     prefixIcon: Icon(Icons.phone_rounded),
                     counterText: '',
                   ),
